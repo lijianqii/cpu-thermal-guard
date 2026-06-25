@@ -1,0 +1,38 @@
+[Unit]
+Description=CPU Thermal Guard - 超温时限制 CPU 频率/功率
+Documentation=file:///opt/cpu_thermal_guard/README.md
+After=multi-user.target
+
+[Service]
+Type=simple
+# 修改下面的路径为实际安装路径 (建议 /usr/local/sbin)
+# 参数说明: -H 高阈值℃  -L 低阈值℃  -m freq|power  -s 步长  -i 轮询ms
+ExecStart=/usr/local/sbin/cpu_thermal_guard -m freq -H 80 -L 72 -s 200 -i 1000
+
+# 收到 stop 时发 SIGTERM，程序捕获后会恢复原始频率/功率上限再退出
+KillSignal=SIGTERM
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=5
+
+# --- 安全加固 (程序需要写 sysfs，故不能完全沙箱) ---
+# 必须 root 才能写 scaling_max_freq / RAPL
+User=root
+# 仅放开写 CPU 控制所需的 sysfs 路径，其余文件系统只读
+ProtectSystem=strict
+ReadWritePaths=/sys/devices/system/cpu /sys/class/powercap
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+# 不需要网络
+PrivateNetwork=true
+# 限制能力集 (写 sysfs 由 DAC 控制，基本无需额外 cap)
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

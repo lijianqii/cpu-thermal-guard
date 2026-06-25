@@ -1,0 +1,10 @@
+# 编译产物
+build/
+cpu_thermal_guard
+*.o
+
+# 编辑器/临时文件
+*.swp
+*~
+.vscode/
+.idea/
