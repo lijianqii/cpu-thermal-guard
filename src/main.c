@@ -3,6 +3,7 @@
 #include "limiter.h"
 #include "control.h"
 #include "protocol.h"
+#include "util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +11,6 @@
 #include <getopt.h>
 #include <signal.h>
 #include <time.h>
-#include <errno.h>
 
 typedef struct {
     int          high_c;
@@ -60,16 +60,7 @@ static void usage(const char *prog)
         DEFAULT_SOCK_PATH);
 }
 
-static int parse_hhmm(const char *s, int *out_min)
-{
-    int hh, mm;
-    if (sscanf(s, "%d:%d", &hh, &mm) != 2)
-        return -1;
-    if (hh < 0 || hh > 23 || mm < 0 || mm > 59)
-        return -1;
-    *out_min = hh * 60 + mm;
-    return 0;
-}
+
 
 /* 判断 now_min 是否在 [start, end) 夜间窗口内（支持跨午夜）。
  * 例如 start=0(00:00) end=360(06:00)：0..359 命中。
