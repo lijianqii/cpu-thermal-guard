@@ -26,9 +26,59 @@
 ## 编译
 
 ```sh
-make            # 产出 ./cpu_thermal_guard
+make            # 产出 ./cpu_thermal_guard (守护进程) 和 ./ctlguard (控制工具)
 make run        # 等价于 ./cpu_thermal_guard -v --dry-run
 ```
+
+## 运行时控制 (ctlguard)
+
+守护进程启动时会监听一个 Unix domain socket（默认 `/run/cpu-thermal-guard.sock`），
+`ctlguard` 通过它**在不重启服务的情况下**读取/修改配置：
+
+```sh
+# 获取全部配置与实时状态(温度、当前动作、限制值)
+ctlguard get
+
+# 修改阈值/步长/间隔
+ctlguard high 85
+ctlguard low 70
+ctlguard step 300
+ctlguard interval 2000
+
+# 夜间模式
+ctlguard night on
+ctlguard night-start 23:30
+ctlguard night-end 07:00
+ctlguard night off
+
+# 通用形式
+ctlguard set high 85
+
+# 指定非默认 socket (与守护进程 -S 对应)
+ctlguard -s /tmp/ctg.sock get
+```
+
+`get` 输出示例：
+
+```
+high=85
+low=70
+interval=1000
+mode=freq
+step=200
+night=on
+night-start=23:00
+night-end=07:00
+night-active=no
+state=active
+temp=68.000
+action=保持
+limit=max_freq=2800 MHz (上限 2800, 地板 400)
+OK
+```
+
+可修改的 key：`high` `low` `interval` `step` `night` `night-start` `night-end`。
+所有修改即时生效并经过合法性校验（如 `low` 必须小于 `high`）。
 
 ## 用法
 
@@ -40,6 +90,11 @@ cpu_thermal_guard [选项]
   -m, --mode freq|power  限制方式 (默认 freq)
   -s, --step <值>      调整步长 (freq:MHz / power:W)
   -f, --floor <值>     最低上限地板 (freq:MHz / power:W, 默认自动)
+  -N, --night          启用夜间空闲时段：强制压到最低
+  --night-start HH:MM  夜间起始时间
+  --night-end   HH:MM  夜间结束时间
+  -S, --socket <path>  控制 socket 路径 (默认 /run/cpu-thermal-guard.sock)
+  -C, --no-control     不启动控制接口
   -n, --dry-run        不实际写入，仅打印决策
   -v, --verbose        打印每次轮询的温度与动作
   -h, --help           帮助
@@ -87,3 +142,7 @@ sudo make uninstall
 
 Fedora 43 / Intel CPU（`intel_pstate`，4 核）/ gcc 15。
 其他发行版与 Intel CPU 通常通用；AMD 平台限频路径相同，RAPL 路径可能不同。
+
+## 许可证
+
+本项目采用 [MIT 许可证](LICENSE)。

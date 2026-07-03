@@ -1,6 +1,7 @@
 # 编译产物
 build/
 cpu_thermal_guard
+ctlguard
 *.o
 
 # 编辑器/临时文件

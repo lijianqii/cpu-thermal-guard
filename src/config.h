@@ -9,6 +9,10 @@
 #define DEFAULT_STEP_MHZ     200     /* 限频步长（MHz） */
 #define DEFAULT_STEP_W       2       /* 限功率步长（W） */
 
+/* 夜间空闲时段默认窗口（跨午夜，单位分钟） */
+#define DEFAULT_NIGHT_START_MIN   (23*60 + 0)   /* 23:00 */
+#define DEFAULT_NIGHT_END_MIN     (7*60 + 0)    /* 07:00 */
+
 /* sysfs 路径 */
 #define THERMAL_BASE   "/sys/class/thermal"
 #define CPUFREQ_BASE   "/sys/devices/system/cpu"

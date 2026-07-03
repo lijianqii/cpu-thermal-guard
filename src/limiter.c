@@ -271,6 +271,20 @@ int limiter_relax(limiter_t *lm, int step)
     return apply_power(lm, lm->power_current + (long)step * 1000000L);
 }
 
+int limiter_force_floor(limiter_t *lm)
+{
+    if (lm->mode == LIMIT_MODE_FREQ)
+        return apply_freq(lm, lm->freq_floor);
+    return apply_power(lm, lm->power_floor);
+}
+
+int limiter_force_ceiling(limiter_t *lm)
+{
+    if (lm->mode == LIMIT_MODE_FREQ)
+        return apply_freq(lm, lm->freq_ceiling);
+    return apply_power(lm, lm->power_ceiling);
+}
+
 int limiter_is_limited(const limiter_t *lm)
 {
     if (lm->mode == LIMIT_MODE_FREQ)

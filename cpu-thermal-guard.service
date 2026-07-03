@@ -7,7 +7,7 @@ After=multi-user.target
 Type=simple
 # 修改下面的路径为实际安装路径 (建议 /usr/local/sbin)
 # 参数说明: -H 高阈值℃  -L 低阈值℃  -m freq|power  -s 步长  -i 轮询ms
-ExecStart=/usr/local/sbin/cpu_thermal_guard -m freq -H 80 -L 72 -s 200 -i 1000
+ExecStart=/usr/local/sbin/cpu_thermal_guard -m freq -H 80 -L 72 -s 200 -i 1000 -N --night-start 23:00 --night-end 07:00
 
 # 收到 stop 时发 SIGTERM，程序捕获后会恢复原始频率/功率上限再退出
 KillSignal=SIGTERM
@@ -20,7 +20,8 @@ RestartSec=5
 User=root
 # 仅放开写 CPU 控制所需的 sysfs 路径，其余文件系统只读
 ProtectSystem=strict
-ReadWritePaths=/sys/devices/system/cpu /sys/class/powercap
+# /run 用于控制 socket (ctlguard 通过它交互)
+ReadWritePaths=/sys/devices/system/cpu /sys/class/powercap /run
 ProtectHome=true
 PrivateTmp=true
 NoNewPrivileges=true

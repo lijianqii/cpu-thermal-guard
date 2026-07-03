@@ -68,6 +68,11 @@ int limiter_tighten(limiter_t *lm, int step);
 /* 放宽一档。返回 1 表示发生了变化。 */
 int limiter_relax(limiter_t *lm, int step);
 
+/* 强制压到地板（最低上限）。返回 1 表示发生了变化。幂等。 */
+int limiter_force_floor(limiter_t *lm);
+/* 强制放开到天花板（最高上限）。返回 1 表示发生了变化。幂等。 */
+int limiter_force_ceiling(limiter_t *lm);
+
 /* 当前是否已处于受限状态(低于原始/天花板)。 */
 int limiter_is_limited(const limiter_t *lm);
 
