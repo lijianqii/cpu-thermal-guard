@@ -24,6 +24,7 @@ typedef struct {
     int          night_enable;     /* 是否启用夜间空闲时段 */
     int          night_start_min;  /* 夜间起始 (当天分钟) */
     int          night_end_min;    /* 夜间结束 (当天分钟) */
+    int          weekend_enable;   /* 周末全天强制最低 */
     const char  *sock_path;        /* 控制 socket 路径 */
     int          no_control;       /* 1: 不启动控制接口 */
 } options_t;
@@ -49,6 +50,7 @@ static void usage(const char *prog)
         "  -N, --night          启用夜间空闲时段：强制压到最低\n"
         "  --night-start HH:MM  夜间起始时间 (默认 %02d:%02d)\n"
         "  --night-end   HH:MM  夜间结束时间 (默认 %02d:%02d)\n"
+        "  -W, --weekend        启用周末模式：周六/周日全天强制最低\n"
         "  -S, --socket <path>  控制 socket 路径 (默认 %s)\n"
         "  -C, --no-control     不启动控制接口\n"
         "  -n, --dry-run        不实际写入，仅打印决策\n"
@@ -87,6 +89,7 @@ static int parse_args(int argc, char **argv, options_t *o)
         {"night",       no_argument,       0, 'N'},
         {"night-start", required_argument, 0, 1001},
         {"night-end",   required_argument, 0, 1002},
+        {"weekend",     no_argument,       0, 'W'},
         {"socket",      required_argument, 0, 'S'},
         {"no-control",  no_argument,       0, 'C'},
         {"dry-run",     no_argument,       0, 'n'},
@@ -106,12 +109,13 @@ static int parse_args(int argc, char **argv, options_t *o)
     o->night_enable    = 0;
     o->night_start_min = DEFAULT_NIGHT_START_MIN;
     o->night_end_min   = DEFAULT_NIGHT_END_MIN;
+    o->weekend_enable  = 0;
     o->sock_path       = DEFAULT_SOCK_PATH;
     o->no_control      = 0;
 
     int floor_arg = -1;
     int c;
-    while ((c = getopt_long(argc, argv, "H:L:i:m:s:f:NS:Cnvh", longopts, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "H:L:i:m:s:f:NWS:Cnvh", longopts, NULL)) != -1) {
         switch (c) {
         case 'H': o->high_c = atoi(optarg); break;
         case 'L': o->low_c = atoi(optarg); break;
@@ -125,6 +129,7 @@ static int parse_args(int argc, char **argv, options_t *o)
         case 's': o->step = atoi(optarg); break;
         case 'f': floor_arg = atoi(optarg); break;
         case 'N': o->night_enable = 1; break;
+        case 'W': o->weekend_enable = 1; break;
         case 1001:
             if (parse_hhmm(optarg, &o->night_start_min) != 0) {
                 fprintf(stderr, "无效的 --night-start: %s (应为 HH:MM)\n", optarg);
@@ -212,6 +217,7 @@ int main(int argc, char **argv)
         .night_enable    = opt.night_enable,
         .night_start_min = opt.night_start_min,
         .night_end_min   = opt.night_end_min,
+        .weekend_enable  = opt.weekend_enable,
     };
 
     guard_runtime_t rt;
@@ -243,6 +249,8 @@ int main(int argc, char **argv)
         printf("  夜间   : %02d:%02d-%02d:%02d 时段内强制最低\n",
                cfg.night_start_min / 60, cfg.night_start_min % 60,
                cfg.night_end_min   / 60, cfg.night_end_min   % 60);
+    if (cfg.weekend_enable)
+        printf("  周末   : 周六/周日全天强制最低\n");
     printf("  接口   : %s\n", ctl_fd >= 0 ? opt.sock_path : "(无)");
     printf("  状态   : %s\n", lm.active ? "可写(将实际限制)"
                                         : (opt.dry_run ? "dry-run(仅打印)"
@@ -261,31 +269,38 @@ int main(int argc, char **argv)
         long temp_c = millic / 1000;
         const char *action = "保持";
 
-        /* 计算当前是否应处于夜间强制态 (随运行时 cfg 实时变化) */
-        int want_night = 0;
-        if (cfg.night_enable && cfg.night_start_min != cfg.night_end_min) {
-            struct tm tm;
-            time_t now = time(NULL);
-            localtime_r(&now, &tm);
+        /* 计算当前是否应处于强制最低态 (周末或夜间，随运行时 cfg 实时变化) */
+        int want_idle = 0;
+        struct tm tm;
+        time_t now = time(NULL);
+        localtime_r(&now, &tm);
+
+        /* 周末判定: tm_wday: 0=周日 1=周一 ... 6=周六 */
+        if (cfg.weekend_enable && (tm.tm_wday == 0 || tm.tm_wday == 6))
+            want_idle = 1;
+
+        /* 夜间判定 (周末优先级相同，两者任一满足即强制最低) */
+        if (!want_idle && cfg.night_enable &&
+            cfg.night_start_min != cfg.night_end_min) {
             int now_min = tm.tm_hour * 60 + tm.tm_min;
-            want_night = in_night_window(now_min, cfg.night_start_min,
-                                         cfg.night_end_min);
+            want_idle = in_night_window(now_min, cfg.night_start_min,
+                                        cfg.night_end_min);
         }
 
-        if (want_night && !rt.night_active) {
+        if (want_idle && !rt.idle_active) {
             limiter_force_floor(&lm);
             limiter_describe(&lm, desc, sizeof(desc));
-            rt.night_active = 1;
-            action = "进入夜间(压到最低)";
-        } else if (!want_night && rt.night_active) {
+            rt.idle_active = 1;
+            action = "进入强制最低(周末/夜间)";
+        } else if (!want_idle && rt.idle_active) {
             limiter_force_ceiling(&lm);
             limiter_describe(&lm, desc, sizeof(desc));
-            rt.night_active = 0;
-            action = "退出夜间(放开)";
-        } else if (rt.night_active) {
-            action = "夜间(保持最低)";
+            rt.idle_active = 0;
+            action = "退出强制最低(放开)";
+        } else if (rt.idle_active) {
+            action = "强制最低(保持)";
         } else {
-            /* 白天/未启用夜间: 正常滞回热控 */
+            /* 未处于强制最低态: 正常滞回热控 (温度超限收紧/回凉爽放宽) */
             if (temp_c >= cfg.high_c) {
                 if (limiter_tighten(&lm, cfg.step)) {
                     limiter_describe(&lm, desc, sizeof(desc));

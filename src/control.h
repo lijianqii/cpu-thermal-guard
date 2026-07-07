@@ -21,6 +21,7 @@ typedef struct {
     int night_enable;
     int night_start_min;
     int night_end_min;
+    int weekend_enable;       /* 周末全天强制最低 */
 } guard_config_t;
 
 /* 守护进程运行时状态: 控制服务与主循环共享 */
@@ -29,7 +30,7 @@ typedef struct {
     limiter_t               *lm;         /* 限制器 (只读其状态用于上报) */
     const thermal_source_t  *src;        /* 温度源 (上报用) */
     int                      dry_run;
-    int                      night_active;  /* 当前是否处于夜间强制态 */
+    int                      idle_active;   /* 当前是否处于强制最低态(周末或夜间) */
     long                     last_millic;   /* 最近一次读到的温度 (毫度) */
     char                     last_action[64];
 } guard_runtime_t;

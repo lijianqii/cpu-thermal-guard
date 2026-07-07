@@ -6,7 +6,7 @@
 #define DEFAULT_HIGH_C       80      /* 高阈值（℃）：超过则限制 */
 #define DEFAULT_LOW_C        72      /* 低阈值（℃）：低于则放宽 */
 #define DEFAULT_INTERVAL_MS  1000    /* 轮询间隔（毫秒） */
-#define DEFAULT_STEP_MHZ     200     /* 限频步长（MHz） */
+#define DEFAULT_STEP_MHZ     50      /* 限频步长（MHz） */
 #define DEFAULT_STEP_W       2       /* 限功率步长（W） */
 
 /* 夜间空闲时段默认窗口（跨午夜，单位分钟） */

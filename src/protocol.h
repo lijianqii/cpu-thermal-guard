@@ -19,6 +19,7 @@
  *   night        夜间开关 (on/off/1/0)
  *   night-start  夜间起始 HH:MM
  *   night-end    夜间结束 HH:MM
+ *   weekend      周末开关 (on/off/1/0)，周六/周日全天强制最低
  */
 
 #define DEFAULT_SOCK_PATH   "/run/cpu-thermal-guard.sock"

@@ -86,7 +86,8 @@ static void build_status(const guard_runtime_t *rt, char *buf, size_t buflen)
         "night=%s\n"
         "night-start=%02d:%02d\n"
         "night-end=%02d:%02d\n"
-        "night-active=%s\n"
+        "weekend=%s\n"
+        "idle-active=%s\n"
         "state=%s\n"
         "temp=%ld.%03ld\n"
         "action=%s\n"
@@ -97,7 +98,8 @@ static void build_status(const guard_runtime_t *rt, char *buf, size_t buflen)
         c->night_enable ? "on" : "off",
         c->night_start_min / 60, c->night_start_min % 60,
         c->night_end_min / 60, c->night_end_min % 60,
-        rt->night_active ? "yes" : "no",
+        c->weekend_enable ? "on" : "off",
+        rt->idle_active ? "yes" : "no",
         state,
         rt->last_millic / 1000, (rt->last_millic % 1000 + 1000) % 1000,
         rt->last_action[0] ? rt->last_action : "-",
@@ -138,6 +140,10 @@ static void handle_set(guard_runtime_t *rt, const char *key, const char *val,
         int m;
         if (parse_hhmm(val, &m) != 0) { snprintf(resp, resplen, "ERR night-end 应为 HH:MM\n"); return; }
         c->night_end_min = m;
+    } else if (!strcmp(key, "weekend")) {
+        int v;
+        if (parse_bool(val, &v) != 0) { snprintf(resp, resplen, "ERR weekend 应为 on/off\n"); return; }
+        c->weekend_enable = v;
     } else {
         snprintf(resp, resplen, "ERR 未知配置项: %s\n", key);
         return;

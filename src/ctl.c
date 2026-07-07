@@ -25,6 +25,7 @@ static void usage(const char *prog)
         "  night <on|off>          夜间模式开关\n"
         "  night-start <HH:MM>     夜间起始\n"
         "  night-end   <HH:MM>     夜间结束\n"
+        "  weekend <on|off>        周末模式开关\n"
         "\n"
         "选项:\n"
         "  -s, --socket <path>     控制 socket 路径 (默认 %s)\n"
@@ -35,8 +36,9 @@ static void usage(const char *prog)
         "  %s high 85\n"
         "  %s set low 70\n"
         "  %s night on\n"
-        "  %s night-start 23:30\n",
-        prog, DEFAULT_SOCK_PATH, prog, prog, prog, prog, prog);
+        "  %s night-start 23:30\n"
+        "  %s weekend on\n",
+        prog, DEFAULT_SOCK_PATH, prog, prog, prog, prog, prog, prog);
 }
 
 /* 连接守护进程，发送 req，把响应打印到 stdout。返回 0 成功。 */
@@ -131,7 +133,7 @@ int main(int argc, char **argv)
     } else if (!strcmp(cmd, "high")  || !strcmp(cmd, "low") ||
                !strcmp(cmd, "interval") || !strcmp(cmd, "step") ||
                !strcmp(cmd, "night") || !strcmp(cmd, "night-start") ||
-               !strcmp(cmd, "night-end")) {
+               !strcmp(cmd, "night-end") || !strcmp(cmd, "weekend")) {
         if (i >= argc) {
             fprintf(stderr, "用法: %s <value>\n", cmd);
             return 2;
