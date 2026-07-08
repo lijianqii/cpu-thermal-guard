@@ -192,6 +192,9 @@ int main(int argc, char **argv)
     sigaction(SIGINT,  &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
 
+    /* 忽略 SIGPIPE: 避免向已断开的控制 socket 写入时进程被杀死 */
+    signal(SIGPIPE, SIG_IGN);
+
     thermal_source_t src;
     if (thermal_select(&src) != 0) {
         fprintf(stderr, "无法选定温度源，退出。\n");
