@@ -13,6 +13,20 @@
 #define DEFAULT_NIGHT_START_MIN   (23*60 + 0)   /* 23:00 */
 #define DEFAULT_NIGHT_END_MIN     (7*60 + 0)    /* 07:00 */
 
+/* ---- 分级自适应调度参数 ---- */
+#define DEFAULT_WARM_MARGIN_C      3     /* WARM 区下沿偏移：high - margin */
+#define DEFAULT_CRITICAL_MARGIN_C  8     /* CRITICAL 区上沿偏移：high + margin */
+#define DEFAULT_COOL_CONFIRM       3     /* COLD 连续确认轮数 */
+#define DEFAULT_RISE_RATE         500   /* 上升趋势触发阈值 (milli°C/s, 500=0.5°C/s) */
+#define DEFAULT_FALL_RATE         300   /* 下降趋势加速阈值 (milli°C/s, 300=0.3°C/s) */
+#define PINGPONG_BOOST_C           2     /* 乒乓检测时临时抬高 low 的度数 */
+
+/* ---- Mock 测试用默认值 ---- */
+#define MOCK_FREQ_CEILING_KHZ   2800000L   /* 2800 MHz */
+#define MOCK_FREQ_FLOOR_KHZ      400000L   /*  400 MHz */
+#define MOCK_POWER_CEILING_UW  28000000L   /*  28 W */
+#define MOCK_POWER_FLOOR_UW   10000000L   /*  10 W */
+
 /* sysfs 路径 */
 #define THERMAL_BASE   "/sys/class/thermal"
 #define CPUFREQ_BASE   "/sys/devices/system/cpu"

@@ -22,6 +22,12 @@ typedef struct {
     int night_start_min;
     int night_end_min;
     int weekend_enable;       /* 周末全天强制最低 */
+    /* ---- 分级自适应调度参数 ---- */
+    int warm_margin;          /* WARM 区下沿偏移 (°C) */
+    int critical_margin;      /* CRITICAL 区上沿偏移 (°C) */
+    int cool_confirm;         /* COLD 连续确认轮数 */
+    long rise_rate;           /* 上升趋势触发阈值 (milli°C/s) */
+    long fall_rate;           /* 下降趋势加速阈值 (milli°C/s) */
 } guard_config_t;
 
 /* 守护进程运行时状态: 控制服务与主循环共享 */

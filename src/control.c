@@ -88,6 +88,11 @@ static void build_status(const guard_runtime_t *rt, char *buf, size_t buflen)
         "night-end=%02d:%02d\n"
         "weekend=%s\n"
         "idle-active=%s\n"
+        "warm-margin=%d\n"
+        "critical-margin=%d\n"
+        "cool-confirm=%d\n"
+        "rise-rate=%ld\n"
+        "fall-rate=%ld\n"
         "state=%s\n"
         "temp=%ld.%03ld\n"
         "action=%s\n"
@@ -100,6 +105,8 @@ static void build_status(const guard_runtime_t *rt, char *buf, size_t buflen)
         c->night_end_min / 60, c->night_end_min % 60,
         c->weekend_enable ? "on" : "off",
         rt->idle_active ? "yes" : "no",
+        c->warm_margin, c->critical_margin, c->cool_confirm,
+        c->rise_rate, c->fall_rate,
         state,
         rt->last_millic / 1000, (rt->last_millic % 1000 + 1000) % 1000,
         rt->last_action[0] ? rt->last_action : "-",
@@ -144,6 +151,26 @@ static void handle_set(guard_runtime_t *rt, const char *key, const char *val,
         int v;
         if (parse_bool(val, &v) != 0) { snprintf(resp, resplen, "ERR weekend 应为 on/off\n"); return; }
         c->weekend_enable = v;
+    } else if (!strcmp(key, "warm-margin")) {
+        int v = atoi(val);
+        if (v <= 0) { snprintf(resp, resplen, "ERR warm-margin 必须为正\n"); return; }
+        c->warm_margin = v;
+    } else if (!strcmp(key, "critical-margin")) {
+        int v = atoi(val);
+        if (v <= 0) { snprintf(resp, resplen, "ERR critical-margin 必须为正\n"); return; }
+        c->critical_margin = v;
+    } else if (!strcmp(key, "cool-confirm")) {
+        int v = atoi(val);
+        if (v < 1) { snprintf(resp, resplen, "ERR cool-confirm 必须 >=1\n"); return; }
+        c->cool_confirm = v;
+    } else if (!strcmp(key, "rise-rate")) {
+        long v = atol(val);
+        if (v <= 0) { snprintf(resp, resplen, "ERR rise-rate 必须为正\n"); return; }
+        c->rise_rate = v;
+    } else if (!strcmp(key, "fall-rate")) {
+        long v = atol(val);
+        if (v <= 0) { snprintf(resp, resplen, "ERR fall-rate 必须为正\n"); return; }
+        c->fall_rate = v;
     } else {
         snprintf(resp, resplen, "ERR 未知配置项: %s\n", key);
         return;

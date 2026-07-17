@@ -185,14 +185,43 @@ static int probe_writable(const limiter_t *lm)
 }
 
 int limiter_init(limiter_t *lm, limit_mode_t mode, int dry_run,
-                 long freq_floor_khz, long power_floor_uw)
+                 long freq_floor_khz, long power_floor_uw, int mock)
 {
     memset(lm, 0, sizeof(*lm));
     lm->mode    = mode;
     lm->dry_run = dry_run;
     lm->active  = 0;
 
-    int rc = (mode == LIMIT_MODE_FREQ)
+    int rc;
+    if (mock) {
+        if (mode == LIMIT_MODE_FREQ) {
+            long ceiling = MOCK_FREQ_CEILING_KHZ;
+            long hw_min  = MOCK_FREQ_FLOOR_KHZ;
+            long floor   = (freq_floor_khz > 0) ? freq_floor_khz : hw_min;
+            lm->freq_nodes = calloc(1, sizeof(freq_node_t));
+            if (!lm->freq_nodes)
+                return -1;
+            snprintf(lm->freq_nodes[0].path, sizeof(lm->freq_nodes[0].path),
+                     "<mock>");
+            lm->freq_nodes[0].orig = ceiling;
+            lm->n_freq       = 1;
+            lm->freq_ceiling = ceiling;
+            lm->freq_floor   = clampl(floor, hw_min, ceiling);
+            lm->freq_current = ceiling;
+        } else {
+            long orig = MOCK_POWER_CEILING_UW;
+            snprintf(lm->power_path, sizeof(lm->power_path), "<mock>");
+            lm->power_orig    = orig;
+            lm->power_ceiling = orig;
+            lm->power_current = orig;
+            long floor = (power_floor_uw > 0) ? power_floor_uw : (orig * 2 / 5);
+            lm->power_floor = clampl(floor, 1000000L, orig);
+        }
+        lm->active = 0;
+        return 0;
+    }
+
+    rc = (mode == LIMIT_MODE_FREQ)
                  ? init_freq(lm, freq_floor_khz)
                  : init_power(lm, power_floor_uw);
     if (rc != 0)

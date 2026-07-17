@@ -11,9 +11,12 @@ DAEMON_SRCS := $(filter-out $(SRCDIR)/ctl.c,$(wildcard $(SRCDIR)/*.c))
 DAEMON_OBJS := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(DAEMON_SRCS))
 CTL_OBJS    := $(OBJDIR)/ctl.o
 
-.PHONY: all clean run install uninstall
+.PHONY: all clean run test install uninstall
 
 all: $(BIN) $(CTL)
+
+test: tests/test_scheduler
+	./tests/test_scheduler
 
 $(BIN): $(DAEMON_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
@@ -52,4 +55,12 @@ uninstall:
 	-systemctl daemon-reload 2>/dev/null || true
 
 clean:
-	rm -rf $(OBJDIR) $(BIN) $(CTL)
+	rm -rf $(OBJDIR) $(BIN) $(CTL) tests/test_scheduler tests/*.o
+
+# ---- 单元测试 ----
+TEST_CFLAGS := -std=c11 -Wall -Wextra -O2 -D_POSIX_C_SOURCE=200809L -Isrc
+
+tests/test_scheduler: tests/test_scheduler.c \
+		src/scheduler.c src/limiter.c src/util.c \
+		src/config.h src/scheduler.h src/limiter.h src/control.h src/util.h
+	$(CC) $(TEST_CFLAGS) -o $@ tests/test_scheduler.c src/scheduler.c src/limiter.c src/util.c

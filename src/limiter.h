@@ -55,13 +55,14 @@ const char *limiter_mode_name(limit_mode_t m);
  * 初始化限制器：探测节点、保存原值、计算边界。
  *   freq_floor_khz: <=0 表示用 cpuinfo_min_freq；否则作为频率地板(clamp 到硬件范围)。
  *   power_floor_uw: <=0 表示默认(原值的 40%)；否则作为功率地板。
+ *   mock: 1 = 不访问 sysfs，使用内存模拟值 (用于测试)。
  * 返回:
  *    1  = 就绪且可写 (active)
  *    0  = 降级为只读监控 (dry_run 或非 root 或节点不可写)
  *   -1  = 致命错误 (无法探测到任何受控节点)
  */
 int limiter_init(limiter_t *lm, limit_mode_t mode, int dry_run,
-                 long freq_floor_khz, long power_floor_uw);
+                 long freq_floor_khz, long power_floor_uw, int mock);
 
 /* 收紧一档 (step: freq 为 MHz, power 为 W)。返回 1 表示发生了变化。 */
 int limiter_tighten(limiter_t *lm, int step);

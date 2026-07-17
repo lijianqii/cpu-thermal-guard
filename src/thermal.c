@@ -98,3 +98,14 @@ int thermal_read(const thermal_source_t *src, long *millic)
     *millic = v;
     return 0;
 }
+
+int thermal_select_mock(thermal_source_t *src, const char *mock_path)
+{
+    if (!src || !mock_path)
+        return -1;
+    memset(src, 0, sizeof(*src));
+    snprintf(src->type, sizeof(src->type), "mock");
+    snprintf(src->temp_path, sizeof(src->temp_path), "%s", mock_path);
+    src->valid = 1;
+    return 0;
+}

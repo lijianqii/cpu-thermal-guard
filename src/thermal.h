@@ -28,4 +28,11 @@ int thermal_select(thermal_source_t *src);
  */
 int thermal_read(const thermal_source_t *src, long *millic);
 
+/*
+ * 创建一个 mock 温度源：从指定文件读取温度值（milli°C）。
+ * 用于无 thermal zone 的虚拟机/CI 环境测试。
+ * 成功返回 0；失败返回 -1。
+ */
+int thermal_select_mock(thermal_source_t *src, const char *mock_path);
+
 #endif /* THERMAL_H */
